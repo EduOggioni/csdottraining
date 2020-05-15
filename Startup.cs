@@ -12,6 +12,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using csdottraining.Models;
+using csdottraining.Services;
 
 namespace csdottraining
 {
@@ -32,7 +33,10 @@ namespace csdottraining
             Configuration.GetSection(nameof(UsersDatabaseSettings)));
 
             services.AddSingleton<IUsersDatabaseSettings>(sp =>
-        sp.GetRequiredService<IOptions<UsersDatabaseSettings>>().Value);
+                sp.GetRequiredService<IOptions<UsersDatabaseSettings>>().Value);
+            
+            services.AddSingleton<UserService>();
+
             services.AddControllers();
         }
 
