@@ -20,6 +20,7 @@ namespace csdottraining
             Host.CreateDefaultBuilder(args)
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
+                    Console.WriteLine("App is running ...");
                     webBuilder.UseStartup<Startup>();
                 });
     }

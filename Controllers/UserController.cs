@@ -5,7 +5,7 @@ using System.Collections.Generic;
 
 namespace csdottraining.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/users")]
     [ApiController]
     public class UserController : ControllerBase
     {
@@ -17,6 +17,7 @@ namespace csdottraining.Controllers
         }
 
         [HttpGet]
+        [Route("list")]
         public ActionResult<List<User>> Get() =>
             _userService.Get();
 
@@ -34,6 +35,7 @@ namespace csdottraining.Controllers
         }
 
         [HttpPost]
+        [Route("create")]
         public ActionResult<User> Create(User user)
         {
             _userService.Create(user);
