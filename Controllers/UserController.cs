@@ -17,7 +17,6 @@ namespace csdottraining.Controllers
         }
 
         [HttpGet]
-        [Route("list")]
         public ActionResult<List<User>> Get() =>
             _userService.Get();
 

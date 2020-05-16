@@ -13,6 +13,10 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using csdottraining.Models;
 using csdottraining.Services;
+using Microsoft.OpenApi.Models;
+using System.Reflection;
+using System.IO;
+
 
 namespace csdottraining
 {
@@ -28,7 +32,6 @@ namespace csdottraining
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-             // requires using Microsoft.Extensions.Options
             services.Configure<UsersDatabaseSettings>(
             Configuration.GetSection(nameof(UsersDatabaseSettings)));
 
@@ -38,6 +41,14 @@ namespace csdottraining
             services.AddSingleton<UserService>();
 
             services.AddControllers();
+            services.AddSwaggerGen(c => {
+                c.SwaggerDoc("v1", new OpenApiInfo
+                {
+                    Version = "v1",
+                    Title = "API para cadastro de usuários",
+                    Description = "Desafio Concrete ASP.NET WebAPI",
+                });
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -48,11 +59,16 @@ namespace csdottraining
                 app.UseDeveloperExceptionPage();
             }
 
-            app.UseHttpsRedirection();
+            app.UseSwagger();
+            app.UseSwaggerUI(c => {
+                c.SwaggerEndpoint("/swagger/v1/swagger.json", "My API V1");
+            });
+
+            // app.UseHttpsRedirection();
 
             app.UseRouting();
 
-            app.UseAuthorization();
+            // app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>
             {
