@@ -36,8 +36,12 @@ namespace csdottraining.Controllers
 
         [HttpPost]
         [Route("create")]
-        public async Task<ActionResult<User>> Create(User user) =>
+        public async Task<ActionResult<User>> Create(User user)
+        {
             await _userService.CreateAsync(user);
+            
+            return CreatedAtRoute("GetUser", new { id = user.id.ToString() }, user);
+        }
 
         [HttpPut("{id:length(24)}")]
         public async Task<IActionResult> Update(string id, User userIn)
