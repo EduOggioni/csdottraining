@@ -2,6 +2,7 @@ using csdottraining.Models;
 using MongoDB.Driver;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace csdottraining.Services
 {
@@ -17,25 +18,25 @@ namespace csdottraining.Services
             _users = database.GetCollection<User>(settings.UsersCollectionName);
         }
 
-        public List<User> Get() =>
-            _users.Find(user => true).ToList();
+        public async Task<List<User>> GetUsersAsync() =>
+           await _users.Find(user => true).ToListAsync();
 
-        public User Get(string id) =>
-            _users.Find<User>(user => user.id == id).FirstOrDefault();
+        public async Task<User> GetUsersAsync(string id) =>
+           await _users.Find<User>(user => user.id == id).FirstOrDefaultAsync();
 
-        public User Create(User user)
+        public async Task<User> CreateAsync(User user)
         {
-            _users.InsertOne(user);
+            await _users.InsertOneAsync(user);
             return user;
         }
 
-        public void Update(string id, User userIn) =>
-            _users.ReplaceOne(user => user.id == id, userIn);
+        public async void UpdateAsync(string id, User userIn) =>
+            await _users.ReplaceOneAsync(user => user.id == id, userIn);
 
-        public void Remove(User userIn) =>
-            _users.DeleteOne(user => user.id == userIn.id);
+        public async void RemoveAsync(User userIn) =>
+            await _users.DeleteOneAsync(user => user.id == userIn.id);
 
-        public void Remove(string id) => 
-            _users.DeleteOne(user => user.id == id);
+        public async void RemoveAsync(string id) => 
+            await _users.DeleteOneAsync(user => user.id == id);
     }
 }

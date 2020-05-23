@@ -2,6 +2,7 @@ using csdottraining.Models;
 using csdottraining.Services;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace csdottraining.Controllers
 {
@@ -17,13 +18,13 @@ namespace csdottraining.Controllers
         }
 
         [HttpGet]
-        public ActionResult<List<User>> Get() =>
-            _userService.Get();
+        public async Task<ActionResult<List<User>>> Get() =>
+           await _userService.GetUsersAsync();
 
         [HttpGet("{id:length(24)}", Name = "GetUser")]
-        public ActionResult<User> Get(string id)
+        public async Task<ActionResult<User>> Get(string id)
         {
-            var user = _userService.Get(id);
+            var user = await _userService.GetUsersAsync(id);
 
             if (user == null)
             {
@@ -35,39 +36,35 @@ namespace csdottraining.Controllers
 
         [HttpPost]
         [Route("create")]
-        public ActionResult<User> Create(User user)
-        {
-            _userService.Create(user);
-
-            return CreatedAtRoute("GetUser", new { id = user.id.ToString() }, user);
-        }
+        public async Task<ActionResult<User>> Create(User user) =>
+            await _userService.CreateAsync(user);
 
         [HttpPut("{id:length(24)}")]
-        public IActionResult Update(string id, User userIn)
+        public async Task<IActionResult> Update(string id, User userIn)
         {
-            var user = _userService.Get(id);
+            var user = await _userService.GetUsersAsync(id);
 
             if (user == null)
             {
                 return NotFound();
             }
 
-            _userService.Update(id, userIn);
+            _userService.UpdateAsync(id, userIn);
 
             return NoContent();
         }
 
         [HttpDelete("{id:length(24)}")]
-        public IActionResult Delete(string id)
+        public async Task<IActionResult> Delete(string id)
         {
-            var user = _userService.Get(id);
+            var user = await _userService.GetUsersAsync(id);
 
             if (user == null)
             {
                 return NotFound();
             }
 
-            _userService.Remove(user.id);
+            _userService.RemoveAsync(user.id);
 
             return NoContent();
         }
