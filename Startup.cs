@@ -16,7 +16,7 @@ using csdottraining.Services;
 using Microsoft.OpenApi.Models;
 using System.Reflection;
 using System.IO;
-
+using FluentValidation.AspNetCore;
 
 namespace csdottraining
 {
@@ -39,6 +39,9 @@ namespace csdottraining
                 sp.GetRequiredService<IOptions<UsersDatabaseSettings>>().Value);
             
             services.AddSingleton<UserService>();
+            
+            services.AddMvc().AddFluentValidation(fvc =>
+                fvc.RegisterValidatorsFromAssemblyContaining<Startup>());
 
             services.AddControllers();
             services.AddSwaggerGen(c => {
