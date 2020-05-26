@@ -1,4 +1,5 @@
 using FluentValidation;
+using Newtonsoft.Json;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 using System.Collections.Generic;
@@ -12,6 +13,7 @@ namespace csdottraining.Models
     public string id  { get; set; }
 
     [BsonElement("Name")]
+    [JsonProperty("name")]
     public string username { get; set; }
     public string email { get; set; }
     public string password { get; set; }

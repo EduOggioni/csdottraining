@@ -43,7 +43,9 @@ namespace csdottraining
             services.AddMvc().AddFluentValidation(fvc =>
                 fvc.RegisterValidatorsFromAssemblyContaining<Startup>());
 
-            services.AddControllers();
+            services.AddControllers()
+                .AddNewtonsoftJson(options => options.UseMemberCasing());
+                
             services.AddSwaggerGen(c => {
                 c.SwaggerDoc("v1", new OpenApiInfo
                 {
