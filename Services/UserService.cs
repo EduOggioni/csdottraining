@@ -1,7 +1,6 @@
 using csdottraining.Models;
 using MongoDB.Driver;
 using System.Threading.Tasks;
-using System;
 
 namespace csdottraining.Services
 {
@@ -10,7 +9,7 @@ namespace csdottraining.Services
     private readonly IMongoCollection<User> _users;
     private IHashService _hashService;
 
-    public UserService(IUsersDatabaseSettings settings, IHashService hashService)
+    public UserService(ISettings settings, IHashService hashService)
     {
       var client = new MongoClient(settings.ConnectionString);
       var database = client.GetDatabase(settings.DatabaseName);

@@ -4,7 +4,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
-using csdottraining.Models;
 using csdottraining.Services;
 using Microsoft.OpenApi.Models;
 using FluentValidation.AspNetCore;
@@ -27,27 +26,19 @@ namespace csdottraining
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.Configure<UsersDatabaseSettings>(
-            Configuration.GetSection(nameof(UsersDatabaseSettings)));
+            services.Configure<Settings>(
+            Configuration.GetSection(nameof(Settings)));
 
-            services.AddSingleton<IUsersDatabaseSettings>(sp =>
-                sp.GetRequiredService<IOptions<UsersDatabaseSettings>>().Value);
+            services.AddSingleton<ISettings>(sp =>
+                sp.GetRequiredService<IOptions<Settings>>().Value);
             
             services.AddSingleton<IUserService, UserService>();
             services.AddSingleton<ITokenService, TokenService>();
             services.AddSingleton<IHashService, HashService>();
 
-            services.Configure<JwtSettings>(
-            Configuration.GetSection(nameof(JwtSettings)));
+            var settingsSection = Configuration.GetSection(nameof(Settings));
 
-            services.AddSingleton<IJwtSettings>(sp =>
-                sp.GetRequiredService<IOptions<JwtSettings>>().Value);
-            
-            services.AddSingleton<JwtSettings>();
-
-            var jwtSettingsSection = Configuration.GetSection(nameof(JwtSettings));
-
-            var jwtSettings = jwtSettingsSection.Get<JwtSettings>();
+            var jwtSettings = settingsSection.Get<Settings>();
             var key = Encoding.ASCII.GetBytes(jwtSettings.Secret);
 
             services.AddAuthentication(x =>

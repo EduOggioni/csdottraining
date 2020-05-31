@@ -9,25 +9,25 @@ namespace csdottraining.Services
 {
   public class TokenService : ITokenService
   {
-    private readonly IJwtSettings _jwtSettings;
+    private readonly ISettings _settings;
 
-    public TokenService(IJwtSettings jwtSettings)
+    public TokenService(ISettings settings)
     {
-      _jwtSettings = jwtSettings;
+      _settings = settings;
 
     }
 
     public string GenerateToken(User user)
     {
       var tokenHadler = new JwtSecurityTokenHandler();
-      var key = Encoding.ASCII.GetBytes(_jwtSettings.Secret);
+      var key = Encoding.ASCII.GetBytes(_settings.Secret);
       var tokenDescriptor = new SecurityTokenDescriptor
       {
         Subject = new ClaimsIdentity(new Claim[]
         {
           new Claim(ClaimTypes.Name, user.email)
         }),
-        Expires = DateTime.UtcNow.AddSeconds(_jwtSettings.Expires),
+        Expires = DateTime.UtcNow.AddSeconds(_settings.Expires),
         SigningCredentials = new SigningCredentials(
           new SymmetricSecurityKey(key),
           SecurityAlgorithms.HmacSha256Signature

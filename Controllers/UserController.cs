@@ -45,6 +45,7 @@ namespace csdottraining.Controllers
 
             userAtbase.last_login = dateTime;
             userAtbase.update_date = dateTime;
+            userAtbase.access_token = _tokenService.GenerateToken(body);
 
             var user = await _userService.UpdateAsync(userAtbase);
 
