@@ -3,10 +3,11 @@ using csdottraining.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
+using System;
 
 namespace csdottraining.Controllers
 {
-    [Route("api/v1")]
+    [Route("api/v1/users")]
     [ApiController]
     public class UserController : ControllerBase
     {
@@ -20,7 +21,7 @@ namespace csdottraining.Controllers
         }
 
         [HttpGet]
-        [Route("users/{id:length(24)}", Name = "GetUser")]
+        [Route("{id:length(24)}", Name = "GetUser")]
         [Authorize]
         public async Task<ActionResult<User>> GetUserById(string id)
         {
@@ -34,11 +35,18 @@ namespace csdottraining.Controllers
         [HttpPost]
         [Route("signin")]
         [Authorize]
-        public async Task<IActionResult> SignIn([FromServices] User body)
+        public async Task<IActionResult> SignIn([FromBody] User body)
         {
-            var user = await _userService.GetUserAtBase(body.email, body.password);
+            var userAtbase = await _userService.GetUserAsync(body.email, body.password);
             
-            if (user == null) return BadRequest(new { message = "Username or password is incorrect" });
+            if (userAtbase == null) return BadRequest(new { message = "Username or password is incorrect" });
+
+            var dateTime = DateTime.UtcNow;
+
+            userAtbase.last_login = dateTime;
+            userAtbase.update_date = dateTime;
+
+            var user = await _userService.UpdateAsync(userAtbase);
 
             return Ok(new {
                 user.id,
@@ -53,17 +61,20 @@ namespace csdottraining.Controllers
         [Route("signup")]
         public async Task<IActionResult> SignUp([FromBody] User body)
         {
-            var user = await _userService.GetUserByEmailAsync(body.email);
+            var user = await _userService.GetUserAsync(body.email);
             
             if(!(user == null)) return BadRequest(new { message = "Email already exists" });
+            var dateTime = DateTime.UtcNow;
+                        
+            body.access_token = _tokenService.GenerateToken(body);
+            body.creation_date = dateTime;
+            body.update_date = dateTime;
 
-            var token = _tokenService.GenerateToken(body);
-
-            var createdUser = await _userService.CreateAsync(body, token);
+            var createdUser = await _userService.CreateAsync(body);
 
             return CreatedAtRoute(
                 "GetUser",
-                new { id = createdUser.id.ToString()}, 
+                new { id = createdUser.id.ToString() }, 
                 new {
                     createdUser.id,
                     createdUser.creation_date,

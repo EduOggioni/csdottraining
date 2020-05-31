@@ -1,7 +1,7 @@
 using csdottraining.Models;
 using MongoDB.Driver;
-using System;
 using System.Threading.Tasks;
+using System;
 
 namespace csdottraining.Services
 {
@@ -19,48 +19,42 @@ namespace csdottraining.Services
       _users = database.GetCollection<User>(settings.UsersCollectionName);
     }
 
-    public async Task<User> GetUserAtBase(string email, string password)
+    public async Task<User> GetUserByIdAsync(string id) =>
+       await _users.Find<User>(user => user.id == id).FirstOrDefaultAsync();
+
+    public async Task<User> GetUserAsync(string email) =>
+       await _users.Find<User>(user => user.email == email).FirstOrDefaultAsync();
+    
+    public async Task<User> GetUserAsync(string email, string password)
     {
-      var user = await GetUserByEmailAsync(email);
+      var user = await _users.Find<User>(user => user.email == email).FirstOrDefaultAsync();
 
       if(!_hashService.VerifyPassoword(password, user.password)) {
         return null;
       }
 
-      var dateTime = DateTime.UtcNow;
-      var update = Builders<User>.Update
-        .SetOnInsert(user => user.last_login, dateTime)
-        .SetOnInsert(user => user.update_date, dateTime);
-      
-      return await _users.FindOneAndUpdateAsync(user => user.email == email, update);
-    }
-
-    public async Task<User> GetUserByIdAsync(string id) =>
-       await _users.Find<User>(user => user.id == id).FirstOrDefaultAsync();
-
-    public async Task<User> GetUserByEmailAsync(string email) =>
-       await _users.Find<User>(user => user.email == email).FirstOrDefaultAsync();
-
-    public async Task<User> CreateAsync(User user, string token)
-    {
-      var dateTime = DateTime.UtcNow;
-      
-      user.password = _hashService.EncryptPassword(user.password);
-      user.access_token = token;
-      user.creation_date = dateTime;
-      user.update_date = dateTime;
-
-      await _users.InsertOneAsync(user);
       return user;
     }
 
+    public async Task<User> CreateAsync(User user)
+    { 
+      user.password = _hashService.EncryptPassword(user.password);
+      await _users.InsertOneAsync(user);
+
+      return user;
+    }
+
+    public async Task<User> UpdateAsync(User user) =>
+     await _users.FindOneAndReplaceAsync(dbUser => dbUser.id == user.id, user);
   }
 
   public interface IUserService
     {
-        Task<User> CreateAsync(User user, string token);
+        Task<User> CreateAsync(User user);
         Task<User> GetUserByIdAsync(string id);
-        Task<User> GetUserByEmailAsync(string email);
-        Task<User> GetUserAtBase(string email, string password);
+        Task<User> GetUserAsync(string email);
+        Task<User> GetUserAsync(string email, string password);
+        Task<User> UpdateAsync(User user);
+
     }
 }
