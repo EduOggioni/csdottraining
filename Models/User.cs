@@ -18,8 +18,8 @@ namespace csdottraining.Models
     public List<Phone> phones { get; set; }
     public string access_token { get; set; }
     public BsonDateTime last_login { get; set; }
-    public BsonDateTime creation_date { get; set; }
-    public BsonDateTime update_date { get; set; }
+    public BsonDateTime created_at { get; set; }
+    public BsonDateTime updated_at { get; set; }
 
   }
   public class UserValidator : AbstractValidator<User> 

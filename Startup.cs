@@ -48,6 +48,7 @@ namespace csdottraining
             })
             .AddJwtBearer(x =>
             {
+                x.IncludeErrorDetails = true;
                 x.RequireHttpsMetadata = false;
                 x.SaveToken = true;
                 x.TokenValidationParameters = new TokenValidationParameters 

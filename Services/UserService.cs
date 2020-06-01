@@ -28,6 +28,8 @@ namespace csdottraining.Services
     {
       var user = await _users.Find<User>(user => user.email == email).FirstOrDefaultAsync();
 
+      if(user == null) return null;
+      
       if(!_hashService.VerifyPassoword(password, user.password)) {
         return null;
       }
@@ -43,8 +45,8 @@ namespace csdottraining.Services
       return user;
     }
 
-    public async Task<User> UpdateAsync(User user) =>
-     await _users.FindOneAndReplaceAsync(dbUser => dbUser.id == user.id, user);
+    public async Task UpdateAsync(User user) =>
+      await _users.ReplaceOneAsync(dbUser => dbUser.id == user.id, user);
   }
 
   public interface IUserService
@@ -53,7 +55,7 @@ namespace csdottraining.Services
         Task<User> GetUserByIdAsync(string id);
         Task<User> GetUserAsync(string email);
         Task<User> GetUserAsync(string email, string password);
-        Task<User> UpdateAsync(User user);
+        Task UpdateAsync(User user);
 
     }
 }

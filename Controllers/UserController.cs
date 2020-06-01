@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 using System;
+using Microsoft.Extensions.Primitives;
 
 namespace csdottraining.Controllers
 {
@@ -25,34 +26,50 @@ namespace csdottraining.Controllers
         [Authorize]
         public async Task<ActionResult<User>> GetUserById(string id)
         {
+            StringValues authToken;
+
             var user = await _userService.GetUserByIdAsync(id);
 
             if(user == null) return NotFound();
+
+            HttpContext.Request.Headers.TryGetValue("Authorization", out authToken);
+
+            var bearerToken = authToken.ToString().Split()[1];
+
+            if(!bearerToken.Equals(user.access_token)){
+                HttpContext.Response.Headers.Add(
+                    "WWW-Authenticate",
+                    "error_description=\"Unauthorized user\""
+                );
+
+                return Unauthorized();
+            }
+            
+            user.password = null;
 
             return user;
         }
 
         [HttpPost]
         [Route("signin")]
-        [Authorize]
         public async Task<IActionResult> SignIn([FromBody] User body)
         {
-            var userAtbase = await _userService.GetUserAsync(body.email, body.password);
+            var user = await _userService.GetUserAsync(body.email, body.password);
             
-            if (userAtbase == null) return BadRequest(new { message = "Username or password is incorrect" });
+            if (user == null) return BadRequest(new { message = "Username or password is incorrect" });
 
             var dateTime = DateTime.UtcNow;
 
-            userAtbase.last_login = dateTime;
-            userAtbase.update_date = dateTime;
-            userAtbase.access_token = _tokenService.GenerateToken(body);
+            user.last_login = dateTime;
+            user.updated_at = dateTime;
+            user.access_token = _tokenService.GenerateToken(user);
 
-            var user = await _userService.UpdateAsync(userAtbase);
+            await _userService.UpdateAsync(user);
 
             return Ok(new {
                 user.id,
-                user.creation_date,
-                user.update_date,
+                user.created_at,
+                user.updated_at,
                 user.last_login,
                 user.access_token,
             });
@@ -68,8 +85,7 @@ namespace csdottraining.Controllers
             var dateTime = DateTime.UtcNow;
                         
             body.access_token = _tokenService.GenerateToken(body);
-            body.creation_date = dateTime;
-            body.update_date = dateTime;
+            body.created_at = dateTime;
 
             var createdUser = await _userService.CreateAsync(body);
 
@@ -78,8 +94,8 @@ namespace csdottraining.Controllers
                 new { id = createdUser.id.ToString() }, 
                 new {
                     createdUser.id,
-                    createdUser.creation_date,
-                    createdUser.update_date,
+                    createdUser.created_at,
+                    createdUser.updated_at,
                     createdUser.last_login,
                     createdUser.access_token,
                 }
