@@ -1,26 +1,20 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using csdottraining.Models;
 using csdottraining.Services;
 using Microsoft.OpenApi.Models;
-using System.Reflection;
-using System.IO;
 using FluentValidation.AspNetCore;
+using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System;
 
 namespace csdottraining
 {
-    public class Startup
+  public class Startup
     {
         public Startup(IConfiguration configuration)
         {
@@ -32,14 +26,42 @@ namespace csdottraining
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.Configure<UsersDatabaseSettings>(
-            Configuration.GetSection(nameof(UsersDatabaseSettings)));
+            services.Configure<Settings>(
+            Configuration.GetSection(nameof(Settings)));
 
-            services.AddSingleton<IUsersDatabaseSettings>(sp =>
-                sp.GetRequiredService<IOptions<UsersDatabaseSettings>>().Value);
+            services.AddSingleton<ISettings>(sp =>
+                sp.GetRequiredService<IOptions<Settings>>().Value);
             
-            services.AddSingleton<UserService>();
-            
+            services.AddSingleton<IUserService, UserService>();
+            services.AddSingleton<ITokenService, TokenService>();
+            services.AddSingleton<IHashService, HashService>();
+
+            var settingsSection = Configuration.GetSection(nameof(Settings));
+
+            var jwtSettings = settingsSection.Get<Settings>();
+            var key = Encoding.ASCII.GetBytes(jwtSettings.Secret);
+
+            services.AddAuthentication(x =>
+            {
+                x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                x.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            })
+            .AddJwtBearer(x =>
+            {
+                x.IncludeErrorDetails = true;
+                x.RequireHttpsMetadata = false;
+                x.SaveToken = true;
+                x.TokenValidationParameters = new TokenValidationParameters 
+                {
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(key),
+                    ValidateIssuer = false,
+                    ValidateAudience = false,
+                    ValidateLifetime = true,
+                    ClockSkew = TimeSpan.Zero
+                };
+            });
+
             services.AddMvc().AddFluentValidation(fvc =>
                 fvc.RegisterValidatorsFromAssemblyContaining<Startup>());
 
@@ -69,11 +91,12 @@ namespace csdottraining
                 c.SwaggerEndpoint("/swagger/v1/swagger.json", "My API V1");
             });
 
-            // app.UseHttpsRedirection();
+            app.UseHttpsRedirection();
 
             app.UseRouting();
 
-            // app.UseAuthorization();
+            app.UseAuthentication();
+            app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>
             {
