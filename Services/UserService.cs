@@ -1,42 +1,61 @@
 using csdottraining.Models;
 using MongoDB.Driver;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace csdottraining.Services
 {
-    public class UserService
+  public class UserService : IUserService
+  {
+    private readonly IMongoCollection<User> _users;
+    private IHashService _hashService;
+
+    public UserService(ISettings settings, IHashService hashService)
     {
-        private readonly IMongoCollection<User> _users;
+      var client = new MongoClient(settings.ConnectionString);
+      var database = client.GetDatabase(settings.DatabaseName);
 
-        public UserService(IUsersDatabaseSettings settings)
-        {
-            var client = new MongoClient(settings.ConnectionString);
-            var database = client.GetDatabase(settings.DatabaseName);
+      _hashService = hashService;
+      _users = database.GetCollection<User>(settings.UsersCollectionName);
+    }
 
-            _users = database.GetCollection<User>(settings.UsersCollectionName);
-        }
+    public async Task<User> GetUserByIdAsync(string id) =>
+       await _users.Find<User>(user => user.id == id).FirstOrDefaultAsync();
 
-        public async Task<List<User>> GetUsersAsync() =>
-           await _users.Find(user => true).ToListAsync();
+    public async Task<User> GetUserAsync(string email) =>
+       await _users.Find<User>(user => user.email == email).FirstOrDefaultAsync();
+    
+    public async Task<User> GetUserAsync(string email, string password)
+    {
+      var user = await _users.Find<User>(user => user.email == email).FirstOrDefaultAsync();
 
-        public async Task<User> GetUsersAsync(string id) =>
-           await _users.Find<User>(user => user.id == id).FirstOrDefaultAsync();
+      if(user == null) return null;
+      
+      if(!_hashService.VerifyPassoword(password, user.password)) {
+        return null;
+      }
 
-        public async Task<User> CreateAsync(User user)
-        {
-            await _users.InsertOneAsync(user);
-            return user;
-        }
+      return user;
+    }
 
-        public async void UpdateAsync(string id, User userIn) =>
-            await _users.ReplaceOneAsync(user => user.id == id, userIn);
+    public async Task<User> CreateAsync(User user)
+    { 
+      user.password = _hashService.EncryptPassword(user.password);
+      await _users.InsertOneAsync(user);
 
-        public async void RemoveAsync(User userIn) =>
-            await _users.DeleteOneAsync(user => user.id == userIn.id);
+      return user;
+    }
 
-        public async void RemoveAsync(string id) => 
-            await _users.DeleteOneAsync(user => user.id == id);
+    public async Task UpdateAsync(User user) =>
+      await _users.ReplaceOneAsync(dbUser => dbUser.id == user.id, user);
+  }
+
+  public interface IUserService
+    {
+        Task<User> CreateAsync(User user);
+        Task<User> GetUserByIdAsync(string id);
+        Task<User> GetUserAsync(string email);
+        Task<User> GetUserAsync(string email, string password);
+        Task UpdateAsync(User user);
+
     }
 }
