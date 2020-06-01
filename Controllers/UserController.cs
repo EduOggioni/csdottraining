@@ -85,6 +85,7 @@ namespace csdottraining.Controllers
             var dateTime = DateTime.UtcNow;
                         
             body.access_token = _tokenService.GenerateToken(body);
+            body.last_login = dateTime;
             body.created_at = dateTime;
 
             var createdUser = await _userService.CreateAsync(body);
