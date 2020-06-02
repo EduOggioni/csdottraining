@@ -11,6 +11,7 @@ using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System;
+using System.Collections.Generic;
 
 namespace csdottraining
 {
@@ -67,7 +68,7 @@ namespace csdottraining
 
             services.AddControllers()
                 .AddNewtonsoftJson(options => options.UseMemberCasing());
-                
+
             services.AddSwaggerGen(c => {
                 c.SwaggerDoc("v1", new OpenApiInfo
                 {
@@ -75,6 +76,28 @@ namespace csdottraining
                     Title = "API para cadastro de usuários",
                     Description = "Desafio Concrete ASP.NET WebAPI",
                 });
+                c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+                {    
+                    Description = "JWT Authorization header using the Bearer scheme.",
+                    Name = "Authorization",
+                    In = ParameterLocation.Header,
+                    Type = SecuritySchemeType.Http,
+                    Scheme = "bearer",
+                    BearerFormat = "JWT"
+                });
+                
+                c.AddSecurityRequirement(new OpenApiSecurityRequirement {
+                {
+                    new OpenApiSecurityScheme
+                    {
+                        Reference = new OpenApiReference { 
+                            Type = ReferenceType.SecurityScheme, 
+                            Id = "Bearer"
+                        }
+                    },
+                    new List<string>()
+                }
+            });
             });
         }
 
