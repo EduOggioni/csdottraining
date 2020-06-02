@@ -17,7 +17,7 @@ namespace csdottraining.Services
 
     }
 
-    public string GenerateToken(User user)
+    public string GenerateToken(string email)
     {
       var tokenHadler = new JwtSecurityTokenHandler();
       var key = Encoding.ASCII.GetBytes(_settings.Secret);
@@ -25,7 +25,7 @@ namespace csdottraining.Services
       {
         Subject = new ClaimsIdentity(new Claim[]
         {
-          new Claim(ClaimTypes.Name, user.email)
+          new Claim(ClaimTypes.Email, email)
         }),
         Expires = DateTime.UtcNow.AddSeconds(_settings.Expires),
         SigningCredentials = new SigningCredentials(
@@ -39,7 +39,7 @@ namespace csdottraining.Services
   }
 
   public interface ITokenService {
-    string GenerateToken(User user);
+    string GenerateToken(string email);
 
   }
 }
