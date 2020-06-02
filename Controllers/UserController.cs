@@ -1,5 +1,6 @@
 using csdottraining.Models;
 using csdottraining.Services;
+using csdottraining.Contracts;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
@@ -52,7 +53,7 @@ namespace csdottraining.Controllers
 
         [HttpPost]
         [Route("signin")]
-        public async Task<IActionResult> SignIn([FromBody] User body)
+        public async Task<ActionResult<SigninResponse>> SignIn([FromBody] SigninRequest body)
         {
             var user = await _userService.GetUserAsync(body.email, body.password);
             
@@ -62,7 +63,7 @@ namespace csdottraining.Controllers
 
             user.last_login = dateTime;
             user.updated_at = dateTime;
-            user.access_token = _tokenService.GenerateToken(user);
+            user.access_token = _tokenService.GenerateToken(user.email);
 
             await _userService.UpdateAsync(user);
 
@@ -77,19 +78,26 @@ namespace csdottraining.Controllers
 
         [HttpPost]
         [Route("signup")]
-        public async Task<IActionResult> SignUp([FromBody] User body)
+        public async Task<ActionResult<SignupResponse>> SignUp([FromBody] SignupResquest body)
         {
-            var user = await _userService.GetUserAsync(body.email);
+            var userAtBase = await _userService.GetUserAsync(body.email);
             
-            if(!(user == null)) return BadRequest(new { message = "Email already exists" });
+            if(!(userAtBase == null)) return BadRequest(new { message = "Email already exists" });
+
             var dateTime = DateTime.UtcNow;
+
+            var user = new User {
+                name = body.name,
+                email = body.email,
+                password = body.password,
+                phones = body.phones,
+                access_token = _tokenService.GenerateToken(body.email),
+                last_login = dateTime,
+                created_at = dateTime
+            };
                         
-            body.access_token = _tokenService.GenerateToken(body);
-            body.last_login = dateTime;
-            body.created_at = dateTime;
-
-            var createdUser = await _userService.CreateAsync(body);
-
+            var createdUser = await _userService.CreateAsync(user);
+            
             return CreatedAtRoute(
                 "GetUser",
                 new { id = createdUser.id.ToString() }, 

@@ -1,4 +1,3 @@
-using FluentValidation;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 using System.Collections.Generic;
@@ -22,15 +21,5 @@ namespace csdottraining.Models
     public DateTime created_at { get; set; }
     public DateTime updated_at { get; set; }
 
-  }
-  public class UserValidator : AbstractValidator<User> 
-  {
-    public UserValidator()
-    {
-      RuleFor(user => user.name).Length(2, 10);
-      RuleFor(user => user.email).EmailAddress().NotNull();
-      RuleFor(user => user.password).NotEmpty().NotNull();
-      RuleForEach(x => x.phones).SetValidator(new PhoneValidator());
-    } 
   }
 }

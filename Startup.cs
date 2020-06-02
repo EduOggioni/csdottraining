@@ -12,10 +12,27 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System;
 using System.Collections.Generic;
+using Swashbuckle.AspNetCore.SwaggerGen;
+using System.Linq;
+using Microsoft.AspNetCore.Authorization;
 
 namespace csdottraining
 {
-  public class Startup
+    public class AuthResponsesOperationFilter : IOperationFilter
+    {
+        public void Apply(OpenApiOperation operation, OperationFilterContext context)
+        {
+            var authAttributes = context.MethodInfo.DeclaringType.GetCustomAttributes(true)
+                .Union(context.MethodInfo.GetCustomAttributes(true))
+                .OfType<AuthorizeAttribute>();
+
+            if (authAttributes.Any())
+                operation.Responses.Add("401", new OpenApiResponse { 
+                    Description = "Unauthorized"
+                });
+        }
+    }
+    public class Startup
     {
         public Startup(IConfiguration configuration)
         {
@@ -85,7 +102,7 @@ namespace csdottraining
                     Scheme = "bearer",
                     BearerFormat = "JWT"
                 });
-                
+
                 c.AddSecurityRequirement(new OpenApiSecurityRequirement {
                 {
                     new OpenApiSecurityScheme
@@ -97,7 +114,9 @@ namespace csdottraining
                     },
                     new List<string>()
                 }
-            });
+                });
+
+                c.OperationFilter<AuthResponsesOperationFilter>();
             });
         }
 
