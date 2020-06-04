@@ -4,7 +4,6 @@ using csdottraining.Contracts;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
-using System;
 using Microsoft.Extensions.Primitives;
 
 namespace csdottraining.Controllers
@@ -14,12 +13,10 @@ namespace csdottraining.Controllers
     public class UserController : ControllerBase
     {
         private readonly IUserService _userService;
-        private readonly ITokenService _tokenService;
 
-        public UserController(IUserService userService, ITokenService tokenService)
+        public UserController(IUserService userService)
         {
             _userService = userService;
-            _tokenService = tokenService;
         }
 
         [HttpGet]
@@ -59,12 +56,6 @@ namespace csdottraining.Controllers
             
             if (user == null) return BadRequest(new { message = "Username or password is incorrect" });
 
-            var dateTime = DateTime.UtcNow;
-
-            user.last_login = dateTime;
-            user.updated_at = dateTime;
-            user.access_token = _tokenService.GenerateToken(user.email);
-
             await _userService.UpdateAsync(user);
 
             return Ok(new {
@@ -84,18 +75,13 @@ namespace csdottraining.Controllers
             
             if(!(userAtBase == null)) return BadRequest(new { message = "Email already exists" });
 
-            var dateTime = DateTime.UtcNow;
-
-            var user = new User {
+            var user = new User{
                 name = body.name,
                 email = body.email,
                 password = body.password,
                 phones = body.phones,
-                access_token = _tokenService.GenerateToken(body.email),
-                last_login = dateTime,
-                created_at = dateTime
             };
-                        
+
             var createdUser = await _userService.CreateAsync(user);
             
             return CreatedAtRoute(

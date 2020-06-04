@@ -16,7 +16,7 @@ namespace csdottraining.Contracts
   {
     public SignupResquestValidator()
     {
-      RuleFor(signup => signup.name).Length(2, 10);
+      RuleFor(signup => signup.name).Length(2, 15);
       RuleFor(signup => signup.email).EmailAddress().NotNull();
       RuleFor(signup => signup.password).NotEmpty().NotNull();
       RuleForEach(x => x.phones).SetValidator(new PhoneValidator());
