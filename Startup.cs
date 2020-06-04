@@ -4,7 +4,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
-using csdottraining.Services;
 using Microsoft.OpenApi.Models;
 using FluentValidation.AspNetCore;
 using System.Text;
@@ -15,6 +14,9 @@ using System.Collections.Generic;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using System.Linq;
 using Microsoft.AspNetCore.Authorization;
+using csdottraining.Repository;
+using csdottraining.Services;
+using csdottraining.Database;
 
 namespace csdottraining
 {
@@ -50,6 +52,8 @@ namespace csdottraining
             services.AddSingleton<ISettings>(sp =>
                 sp.GetRequiredService<IOptions<Settings>>().Value);
             
+            services.AddSingleton<MongoContext>();
+            services.AddSingleton<IUserRepository, UserRepository>();
             services.AddSingleton<IUserService, UserService>();
             services.AddSingleton<ITokenService, TokenService>();
             services.AddSingleton<IHashService, HashService>();
