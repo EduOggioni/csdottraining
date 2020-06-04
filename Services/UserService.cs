@@ -1,32 +1,32 @@
+using System;
 using csdottraining.Models;
-using MongoDB.Driver;
+using csdottraining.Repository;
 using System.Threading.Tasks;
 
 namespace csdottraining.Services
 {
   public class UserService : IUserService
   {
-    private readonly IMongoCollection<User> _users;
+    private IUserRepository _repo;
     private IHashService _hashService;
+    private ITokenService _tokenService;
 
-    public UserService(ISettings settings, IHashService hashService)
+    public UserService(IUserRepository repo,IHashService hashService, ITokenService tokenService)
     {
-      var client = new MongoClient(settings.ConnectionString);
-      var database = client.GetDatabase(settings.DatabaseName);
-
+      _repo = repo;
       _hashService = hashService;
-      _users = database.GetCollection<User>(settings.UsersCollectionName);
+      _tokenService = tokenService;
     }
 
     public async Task<User> GetUserByIdAsync(string id) =>
-       await _users.Find<User>(user => user.id == id).FirstOrDefaultAsync();
+       await _repo.FindById(id);
 
     public async Task<User> GetUserAsync(string email) =>
-       await _users.Find<User>(user => user.email == email).FirstOrDefaultAsync();
+       await _repo.FindByEmail(email);
     
     public async Task<User> GetUserAsync(string email, string password)
     {
-      var user = await _users.Find<User>(user => user.email == email).FirstOrDefaultAsync();
+      var user = await _repo.FindByEmail(email);
 
       if(user == null) return null;
       
@@ -39,14 +39,28 @@ namespace csdottraining.Services
 
     public async Task<User> CreateAsync(User user)
     { 
+      var dateTime = DateTime.UtcNow;
+
+      user.last_login = dateTime;
+      user.created_at = dateTime;
+      user.access_token = _tokenService.GenerateToken(user.email);
       user.password = _hashService.EncryptPassword(user.password);
-      await _users.InsertOneAsync(user);
+
+      await _repo.InsertOneAsync(user);
 
       return user;
     }
 
-    public async Task UpdateAsync(User user) =>
-      await _users.ReplaceOneAsync(dbUser => dbUser.id == user.id, user);
+    public async Task UpdateAsync(User user) {
+      var dateTime = DateTime.UtcNow;
+
+      user.last_login = dateTime;
+      user.updated_at = dateTime;
+      user.access_token = _tokenService.GenerateToken(user.email);
+
+      await _repo.UpdateOneAsync(user);
+      
+    }
   }
 
   public interface IUserService
